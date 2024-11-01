@@ -1,11 +1,14 @@
 // CartItem interface
 export interface CartItem {
-    id: string;
+    _id: string; // Ensure the type matches your product structure
     name: string;
     price: number;
     image: string;
-    quantity: string; // This will still refer to product weight
-    count: number; // New property to track the number of items
+    weight: string;
+    pieces: string;
     servings: string;
+    description: string;
+    macros: string;
+    count: number;
   }
   

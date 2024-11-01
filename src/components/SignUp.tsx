@@ -1,6 +1,7 @@
 // src/components/SignUp.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const SignUpDetails: React.FC = () => {
   const [name, setName] = useState("");
@@ -9,8 +10,14 @@ const SignUpDetails: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [loading, setLoading] = useState<boolean>(false); // Loading state
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSignUp = () => {
+  const navigate = useNavigate();
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
     // Validate mobile number (must be exactly 10 digits)
     if (!/^\d{10}$/.test(mobile)) {
       setErrorMessage("Mobile number must be a 10-digit number.");
@@ -34,80 +41,118 @@ const SignUpDetails: React.FC = () => {
     }
 
     setErrorMessage("");
+
+    const formData = new FormData();
+    formData.append("username", name);
+    formData.append("mobile", mobile);
+    formData.append("password", password);
+
+    console.log(name);
+    console.log(password);
+
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:5000/signUp",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      sessionStorage.setItem("uid", response.data.id);
+      sessionStorage.setItem("token", response.data.token);
+      navigate("/");
+    } catch (error) {
+      setError("Invalid username number or password");
+    } finally {
+      setLoading(false); // Set loading to false after the request completes
+    }
+
     alert("Sign-up successful!");
-    // Add your sign-up logic here
   };
 
   return (
     <div className="flex flex-col items-center bg-white p-8 rounded-lg shadow-md w-80 mt-2">
       <h2 className="text-3xl font-bold mb-8">SIGN UP</h2>
-
-      {/* Input for Name */}
-      <input
-        type="text"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="mb-6 p-3 border border-gray-300 rounded w-full"
-      />
-
-      {/* Input for Mobile Number */}
-      <input
-        type="text"
-        placeholder="Mobile Number"
-        value={mobile}
-        onChange={(e) => setMobile(e.target.value)}
-        className="mb-6 p-3 border border-gray-300 rounded w-full"
-      />
-
-      {/* Input for Password with toggle visibility */}
-      <div className="mb-6 w-full relative">
+      <form onSubmit={handleSignUp} className="w-full">
+        {/* Input for Name */}
         <input
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="p-3 border border-gray-300 rounded w-full"
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mb-6 p-3 border border-gray-300 rounded w-full"
         />
-        <button
-          type="button"
-          className="absolute right-3 top-3 text-gray-600"
-          onClick={() => setShowPassword(!showPassword)}
-        >
-          {showPassword ? "Hide" : "Show"}
-        </button>
-      </div>
 
-      {/* Input for Confirm Password with toggle visibility */}
-      <div className="mb-6 w-full relative">
+        {/* Input for Mobile Number */}
         <input
-          type={showPassword ? "text" : "password"}
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="p-3 border border-gray-300 rounded w-full"
+          type="text"
+          placeholder="Mobile Number"
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          className="mb-6 p-3 border border-gray-300 rounded w-full"
         />
+
+        {/* Input for Password with toggle visibility */}
+        <div className="mb-6 w-full relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="p-3 border border-gray-300 rounded w-full"
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-3 text-gray-600"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+
+        {/* Input for Confirm Password with toggle visibility */}
+        <div className="mb-6 w-full relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="p-3 border border-gray-300 rounded w-full"
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-3 text-gray-600"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+
+        {/* Display error message if validation fails */}
+        {errorMessage && (
+          <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
+        )}
+
+        {/* Sign Up Button */}
         <button
-          type="button"
-          className="absolute right-3 top-3 text-gray-600"
-          onClick={() => setShowPassword(!showPassword)}
+          type="submit"
+          className="flex items-center justify-center bg-gradient-to-r from-[#81f8bb] to-[#22ccdd] text-black py-3 px-4 rounded w-full text-lg"
+          disabled={loading} // Disable button while loading
         >
-          {showPassword ? "Hide" : "Show"}
+          {loading ? (
+            <div className="flex space-x-2 animate-pulse">
+              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+            </div>
+          ) : (
+            "SignUp"
+          )}
         </button>
-      </div>
-
-      {/* Display error message if validation fails */}
-      {errorMessage && (
-        <div className="text-red-500 text-sm mb-4">{errorMessage}</div>
-      )}
-
-      {/* Sign Up Button */}
-      <button
-        onClick={handleSignUp}
-        className="bg-gradient-to-r from-[#81f8bb] to-[#22ccdd] text-black py-3 px-4 rounded w-full text-lg"
-      >
-        Sign Up
-      </button>
+      </form>
     </div>
   );
 };

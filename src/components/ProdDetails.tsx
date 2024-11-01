@@ -160,7 +160,7 @@ const ProdDetails: React.FC<ProdDetailsProps> = ({ products }) => {
         <h2 className="text-2xl font-semibold mb-4">More Products</h2>
         {otherProducts.length > 0 ? (
           otherProducts.map((prod) => (
-            <div key={prod.id} className="mb-4">
+            <div key={prod._id} className="mb-4">
               <h3 className="text-lg font-bold">{prod.name}</h3>
               <img
                 src={prod.image}

@@ -1,31 +1,34 @@
-// src/components/NavBar.tsx
+// src/components/Navbar.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaUser, FaSearch } from "react-icons/fa";
+import { isUserLoggedIn } from "../utils/sessionUtils";
 
 interface NavbarProps {
   totalCount: number;
   onSearchChange: (term: string) => void;
   searchTerm: string;
-  products: any[];
-  onSearchBoxClick: () => void; // Add onSearchBoxClick prop
-  onAccountClick: () => void; // Add onSearchBoxClick prop
+  onSearchBoxClick: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
   totalCount,
   onSearchChange,
   searchTerm,
-  onSearchBoxClick, // Destructure the prop
+  onSearchBoxClick,
 }) => {
   const navigate = useNavigate();
 
   const handleCartClick = () => {
-    navigate("/Cart");
+    navigate("/cart");
   };
 
   const handleAccountClick = () => {
-    navigate("/Login");
+    if (isUserLoggedIn()) {
+      navigate("/profile"); // If logged in, navigate to the profile page
+    } else {
+      navigate("/login"); // If not logged in, navigate to the login page
+    }
   };
 
   return (
@@ -45,7 +48,7 @@ const Navbar: React.FC<NavbarProps> = ({
               placeholder="Search for your favourite delicacy"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              onClick={onSearchBoxClick} // Handle click on the search box
+              onClick={onSearchBoxClick}
             />
             <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-300 text-gray-600 px-3 py-1 rounded-full hover:bg-[#22ccdd] transition-colors duration-300 flex items-center justify-center">
               <FaSearch className="w-5 h-5" />

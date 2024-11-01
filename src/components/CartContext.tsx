@@ -38,10 +38,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Add item to the cart
   const addItem = (item: CartItem) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((i) => i.id === item.id);
+      const existingItem = prevItems.find((i) => i._id === item._id);
       if (existingItem) {
         return prevItems.map((i) =>
-          i.id === item.id
+          i._id === item._id
             ? { ...i, count: i.count + item.count } // Increment count if item exists
             : i
         );
@@ -54,17 +54,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Update item quantity/count in the cart
   const updateCartItem = (item: CartItem, count: number) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((i) => i.id === item.id);
+      const existingItem = prevItems.find((i) => i._id === item._id);
       if (existingItem) {
         return prevItems.map((i) =>
-          i.id === item.id
-            ? { ...i, count, quantity: String(item.quantity) } // Update existing item
+          i._id === item._id
+            ? { ...i, count, quantity: String(item.weight) } // Update existing item
             : i
         );
       } else {
         return [
           ...prevItems,
-          { ...item, count, quantity: String(item.quantity) }, // Add new item if not found
+          { ...item, count, quantity: String(item.weight) }, // Add new item if not found
         ];
       }
     });
@@ -72,7 +72,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Remove item from cart
   const removeFromCart = (id: string) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    setCartItems((prevItems) => prevItems.filter((item) => item._id !== id));
   };
 
   // Clear cart items from state and sessionStorage

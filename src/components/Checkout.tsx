@@ -61,9 +61,12 @@ const Checkout: React.FC = () => {
         ) : (
           <ul>
             {cartItems.map((item) => (
-              <li key={item.id} className="mb-4 border-b pb-4 flex items-start">
+              <li
+                key={item._id}
+                className="mb-4 border-b pb-4 flex items-start"
+              >
                 <img
-                  src={item.image}
+                  src={"data:image/jpeg;base64," + item.image}
                   alt={item.name}
                   className="w-20 h-20 object-cover mr-4"
                 />

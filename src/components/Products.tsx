@@ -1,5 +1,4 @@
-// src/components/Products.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaBalanceScale, FaUtensils } from "react-icons/fa";
 import { BiDish } from "react-icons/bi";
 import { useCart } from "./CartContext";
@@ -20,10 +19,13 @@ const Products: React.FC<ProductsProps> = ({
   onProductClick,
 }) => {
   const { updateCartItem, removeFromCart } = useCart();
-  const [counts, setCounts] = useState<number[]>(
-    Array(products.length).fill(0)
-  );
+  const [counts, setCounts] = useState<number[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Initialize counts when products change
+    setCounts(Array(products.length).fill(0));
+  }, [products]);
 
   const handleCountChange = (
     product: Product,
@@ -42,12 +44,9 @@ const Products: React.FC<ProductsProps> = ({
       const currentCount = newCounts[index];
 
       if (currentCount > 0) {
-        updateCartItem(
-          { ...product, id: product.id.toString(), count: currentCount },
-          currentCount
-        );
+        updateCartItem({ ...product, count: currentCount }, currentCount);
       } else {
-        removeFromCart(product.id.toString());
+        removeFromCart(product._id);
       }
 
       return newCounts;
@@ -73,12 +72,12 @@ const Products: React.FC<ProductsProps> = ({
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product, index) => (
             <div
-              key={product.id}
+              key={product._id}
               className="border bg-gradient-to-r from-[#81f8bb] to-[#22ccdd] rounded-lg shadow-md overflow-hidden flex flex-col h-64 w-80 relative cursor-pointer"
               onClick={() => handleProductClick(product)}
             >
               <img
-                src={product.image}
+                src={"data:image/jpeg;base64," + product.image}
                 alt={product.name}
                 className="w-full h-1/2 object-cover"
               />

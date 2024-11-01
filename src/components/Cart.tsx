@@ -1,10 +1,10 @@
-// src/components/Cart.tsx
 import React, { useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import { useNavigate } from "react-router-dom";
 import { CartContext } from "./CartContext";
 import Navbar from "./NavBar";
 import Footer from "./Footer";
 import { CartItem } from "../types/CartItem";
+import axios from "axios";
 
 interface CartProps {
   updateTotalCount: (counts: number[]) => void;
@@ -12,9 +12,12 @@ interface CartProps {
 }
 
 const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
   const cartContext = useContext(CartContext);
   const [localSearchTerm, setLocalSearchTerm] = useState<string>(searchTerm);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [selectedCutOption, setSelectedCutOption] = useState<string>("");
+  const [preBookDate, setPreBookDate] = useState<string>("");
 
   if (!cartContext) {
     return <div>Error: Cart context is unavailable.</div>;
@@ -23,7 +26,6 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
   const { cartItems, updateCartItem, removeFromCart } = cartContext;
 
   useEffect(() => {
-    // Update the total count whenever cartItems change
     const counts = cartItems.map((item) => item.count);
     updateTotalCount(counts);
   }, [cartItems, updateTotalCount]);
@@ -33,47 +35,70 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
     const newCount = increment
       ? currentCount + 1
       : Math.max(currentCount - 1, 1);
-
     updateCartItem({ ...item, count: newCount }, newCount);
   };
 
-  const totalPrice = cartItems.reduce((acc, item) => {
-    return acc + item.price * item.count;
-  }, 0);
+  const totalPrice = cartItems.reduce(
+    (acc, item) => acc + item.price * item.count,
+    0
+  );
 
-  // Function to handle search input change
-  const handleSearchChange = (term: string) => {
-    setLocalSearchTerm(term);
-  };
+  const handleSearchChange = (term: string) => setLocalSearchTerm(term);
 
-  // Function to handle search box click
-  const handleSearchBoxClick = () => {
-    // Scroll logic can be added here if needed
-  };
+  const verifyToken = async () => {
+    const uid = sessionStorage.getItem("uid");
+    const token = sessionStorage.getItem("token");
 
-  const handleCheckoutClick = () => {
-    const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
-    if (!isLoggedIn) {
-      navigate("/login"); // Redirect to the login page if not logged in
-    } else {
-      navigate("/checkout"); // Navigate to the Checkout page if logged in
+    if (!uid || !token) {
+      return navigate("/login");
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/verify",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setIsLoggedIn(true);
+        navigate("/checkout");
+      } else {
+        sessionStorage.removeItem("uid");
+        sessionStorage.removeItem("token");
+        setIsLoggedIn(false);
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Verification failed", error);
+      sessionStorage.removeItem("uid");
+      sessionStorage.removeItem("token");
+      setIsLoggedIn(false);
+      navigate("/login");
     }
   };
+
+  const handleCutOptionChange = (option: string) => {
+    setSelectedCutOption(option);
+    if (option !== "pre-book") setPreBookDate("");
+  };
+
+  const handleCheckoutClick = () =>
+    isLoggedIn ? navigate("/checkout") : navigate("/login");
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        totalCount={cartItems.reduce(
-          (acc: number, item: CartItem) => acc + item.count,
-          0
-        )}
+        totalCount={cartItems.reduce((acc, item) => acc + item.count, 0)}
         onSearchChange={handleSearchChange}
         searchTerm={localSearchTerm}
         products={[]}
-        onSearchBoxClick={handleSearchBoxClick}
-        onAccountClick={function (): void {
-          throw new Error("Function not implemented.");
-        }}
+        onSearchBoxClick={() => {}}
+        onAccountClick={() => navigate("/profile")}
       />
       <div className="flex-grow p-4 flex justify-center items-center">
         <div className="max-w-lg w-full p-4 bg-white rounded-lg shadow-md">
@@ -82,38 +107,36 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
             <p className="text-center">Your cart is empty.</p>
           ) : (
             <ul>
-              {cartItems.map((item: CartItem) => (
+              {cartItems.map((item) => (
                 <li
-                  key={item.id}
+                  key={item._id}
                   className="mb-4 border-b pb-4 flex items-start"
                 >
                   <img
-                    src={item.image}
+                    src={"data:image/jpeg;base64," + item.image}
                     alt={item.name}
                     className="w-24 h-24 object-cover mr-4"
                   />
                   <div className="flex-grow">
                     <h2 className="text-lg font-semibold">{item.name}</h2>
-                    <div className="flex flex-col mt-2 space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          className="bg-gray-300 rounded px-2"
-                          onClick={() => handleCountChange(item, false)}
-                        >
-                          -
-                        </button>
-                        <span className="font-bold">{item.count}</span>
-                        <button
-                          className="bg-gray-300 rounded px-2"
-                          onClick={() => handleCountChange(item, true)}
-                        >
-                          +
-                        </button>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        Quantity: {item.quantity}
-                      </p>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <button
+                        className="bg-gray-300 rounded px-2"
+                        onClick={() => handleCountChange(item, false)}
+                      >
+                        -
+                      </button>
+                      <span className="font-bold">{item.count}</span>
+                      <button
+                        className="bg-gray-300 rounded px-2"
+                        onClick={() => handleCountChange(item, true)}
+                      >
+                        +
+                      </button>
                     </div>
+                    <p className="text-sm text-gray-600">
+                      Quantity: {item.weight}
+                    </p>
                   </div>
                   <div className="text-right ml-4">
                     <p>
@@ -127,7 +150,7 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
                     </p>
                     <button
                       className="text-red-500 underline mt-2"
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item._id)}
                     >
                       Remove
                     </button>
@@ -149,7 +172,7 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
             </div>
             <div className="flex justify-center">
               <button
-                onClick={handleCheckoutClick} // Navigate to checkout
+                onClick={verifyToken}
                 className="bg-blue-500 text-white px-4 py-2 rounded"
               >
                 Checkout
@@ -158,7 +181,6 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
           </div>
         </div>
       )}
-
       <Footer />
     </div>
   );
