@@ -43,10 +43,10 @@ const Home: React.FC<HomeProps> = ({
         onSearchChange={onSearchChange}
         onSearchBoxClick={handleSearchBoxClick}
         searchTerm={searchTerm}
-        products={products} // Pass the products to the Navbar
-        onAccountClick={() => {
-          /* Handle account click */
-        }}
+        // products={products} // Pass the products to the Navbar
+        // onAccountClick={() => {
+        //   /* Handle account click */
+        // }}
       />
       <Slideshow />
       <WhyFishly />

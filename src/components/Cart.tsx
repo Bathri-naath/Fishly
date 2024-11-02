@@ -1,5 +1,6 @@
+// src/components/Cart.tsx
 import React, { useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import { CartContext } from "./CartContext";
 import Navbar from "./NavBar";
 import Footer from "./Footer";
@@ -12,12 +13,10 @@ interface CartProps {
 }
 
 const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Hook for navigation
   const cartContext = useContext(CartContext);
   const [localSearchTerm, setLocalSearchTerm] = useState<string>(searchTerm);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [selectedCutOption, setSelectedCutOption] = useState<string>("");
-  const [preBookDate, setPreBookDate] = useState<string>("");
 
   if (!cartContext) {
     return <div>Error: Cart context is unavailable.</div>;
@@ -26,6 +25,7 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
   const { cartItems, updateCartItem, removeFromCart } = cartContext;
 
   useEffect(() => {
+    // Update the total count whenever cartItems change
     const counts = cartItems.map((item) => item.count);
     updateTotalCount(counts);
   }, [cartItems, updateTotalCount]);
@@ -35,22 +35,30 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
     const newCount = increment
       ? currentCount + 1
       : Math.max(currentCount - 1, 1);
+
     updateCartItem({ ...item, count: newCount }, newCount);
   };
 
-  const totalPrice = cartItems.reduce(
-    (acc, item) => acc + item.price * item.count,
-    0
-  );
+  const totalPrice = cartItems.reduce((acc, item) => {
+    return acc + item.price * item.count;
+  }, 0);
 
-  const handleSearchChange = (term: string) => setLocalSearchTerm(term);
+  // Function to handle search input change
+  const handleSearchChange = (term: string) => {
+    setLocalSearchTerm(term);
+  };
+
+  // Function to handle search box click
+  const handleSearchBoxClick = () => {
+    // Scroll logic can be added here if needed
+  };
 
   const verifyToken = async () => {
     const uid = sessionStorage.getItem("uid");
     const token = sessionStorage.getItem("token");
 
     if (!uid || !token) {
-      return navigate("/login");
+      navigate("/login");
     }
 
     try {
@@ -59,18 +67,22 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
         {},
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
           },
         }
       );
 
       if (response.data.success) {
+        // Token is valid, set the logged-in state
         setIsLoggedIn(true);
-        navigate("/checkout");
+        // Optionally navigate to a different page
+        navigate("/checkout"); // Replace with your desired route
       } else {
+        // Token is invalid, handle accordingly
         sessionStorage.removeItem("uid");
         sessionStorage.removeItem("token");
         setIsLoggedIn(false);
+        // Optionally navigate to login
         navigate("/login");
       }
     } catch (error) {
@@ -78,27 +90,36 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
       sessionStorage.removeItem("uid");
       sessionStorage.removeItem("token");
       setIsLoggedIn(false);
+      // Optionally navigate to login
       navigate("/login");
     }
   };
 
-  const handleCutOptionChange = (option: string) => {
-    setSelectedCutOption(option);
-    if (option !== "pre-book") setPreBookDate("");
+  const handleCheckoutClick = () => {
+    if (isLoggedIn) {
+      navigate("/checkout"); // Navigate to checkout page
+    } else {
+      navigate("/login"); // Navigate to login page
+    }
   };
 
-  const handleCheckoutClick = () =>
-    isLoggedIn ? navigate("/checkout") : navigate("/login");
+  // const isLoggedIn = sessionStorage.getItem("uid") === "true";
+  // if (!isLoggedIn) {
+  //   navigate("/login"); // Redirect to the login page if not logged in
+  // } else {
+  //   navigate("/checkout"); // Navigate to the Checkout page if logged in
+  // }
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar
-        totalCount={cartItems.reduce((acc, item) => acc + item.count, 0)}
+        totalCount={cartItems.reduce(
+          (acc: number, item: CartItem) => acc + item.count,
+          0
+        )}
         onSearchChange={handleSearchChange}
         searchTerm={localSearchTerm}
-        products={[]}
-        onSearchBoxClick={() => {}}
-        onAccountClick={() => navigate("/profile")}
+        onSearchBoxClick={handleSearchBoxClick}
       />
       <div className="flex-grow p-4 flex justify-center items-center">
         <div className="max-w-lg w-full p-4 bg-white rounded-lg shadow-md">
@@ -107,7 +128,7 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
             <p className="text-center">Your cart is empty.</p>
           ) : (
             <ul>
-              {cartItems.map((item) => (
+              {cartItems.map((item: CartItem) => (
                 <li
                   key={item._id}
                   className="mb-4 border-b pb-4 flex items-start"
@@ -119,24 +140,26 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
                   />
                   <div className="flex-grow">
                     <h2 className="text-lg font-semibold">{item.name}</h2>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <button
-                        className="bg-gray-300 rounded px-2"
-                        onClick={() => handleCountChange(item, false)}
-                      >
-                        -
-                      </button>
-                      <span className="font-bold">{item.count}</span>
-                      <button
-                        className="bg-gray-300 rounded px-2"
-                        onClick={() => handleCountChange(item, true)}
-                      >
-                        +
-                      </button>
+                    <div className="flex flex-col mt-2 space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          className="bg-gray-300 rounded px-2"
+                          onClick={() => handleCountChange(item, false)}
+                        >
+                          -
+                        </button>
+                        <span className="font-bold">{item.count}</span>
+                        <button
+                          className="bg-gray-300 rounded px-2"
+                          onClick={() => handleCountChange(item, true)}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        Quantity: {item.weight}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      Quantity: {item.weight}
-                    </p>
                   </div>
                   <div className="text-right ml-4">
                     <p>
@@ -170,17 +193,30 @@ const Cart: React.FC<CartProps> = ({ updateTotalCount, searchTerm }) => {
                 Total Price: ${totalPrice.toFixed(2)}
               </p>
             </div>
-            <div className="flex justify-center">
-              <button
-                onClick={verifyToken}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-              >
-                Checkout
-              </button>
-            </div>
+
+            {isLoggedIn ? (
+              <div className="flex justify-center">
+                <button
+                  onClick={verifyToken} // Navigate to checkout
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  Checkout
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <button
+                  onClick={verifyToken} // Navigate to checkout
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  Checkout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
+
       <Footer />
     </div>
   );
